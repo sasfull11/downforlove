@@ -1,0 +1,8 @@
+// server/config/coinbase.js
+const CoinbaseCommerce = require('coinbase-commerce-node');
+const Client = CoinbaseCommerce.Client;
+const Charge = CoinbaseCommerce.resources.Charge;
+
+Client.init('your-coinbase-commerce-api-key'); // Get this from your Coinbase account
+
+module.exports = { Charge };

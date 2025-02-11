@@ -1,0 +1,40 @@
+// client/src/components/PremiumPage.js
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const PremiumPage = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleBuyPremium = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { data } = await axios.post('http://localhost:5000/api/payment/create-charge', {
+        amount: 60,  // Amount in USD (or equivalent in BTC)
+        currency: 'USD',
+        userId: 'userId123',  // Replace with actual user ID
+      });
+
+      window.location.href = data.chargeUrl;  // Redirect to Coinbase hosted payment page
+    } catch (err) {
+      setError('Failed to create payment. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Premium Features</h2>
+      <button onClick={handleBuyPremium} disabled={isLoading}>
+        {isLoading ? 'Processing...' : 'Buy Premium'}
+      </button>
+      {error && <p>{error}</p>}
+    </div>
+  );
+};
+
+export default PremiumPage;

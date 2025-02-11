@@ -1,0 +1,102 @@
+// server/routes/paymentRoutes.js
+const express = require('express');
+const { createCharge } = require('../controllers/paymentController');
+const router = express.Router();
+
+router.post('/create-charge', createCharge);
+
+module.exports = router;
+// server/controllers/paymentController.js (update)
+const { Charge } = require('../config/coinbase');
+const User = require('../models/User');
+
+const confirmPayment = async (req, res) => {
+  const { chargeId, userId } = req.body;
+
+  try {
+    const charge = await Charge.retrieve(chargeId);
+
+    if (charge.status === 'CONFIRMED') {
+      // Update user status to premium
+      const user = await User.findByIdAndUpdate(userId, { premium: true }, { new: true });
+      res.status(200).json({ message: 'Payment confirmed, premium access granted!', user });
+    } else {
+      res.status(400).json({ message: 'Payment not confirmed' });
+    }
+  } catch (error) {
+    console.error('Error confirming payment:', error);
+    res.status(500).json({ error: 'Failed to confirm payment' });
+  }
+};
+
+module.exports = { createCharge, confirmPayment };
+// client/src/components/PremiumPage.js
+
+import React, { useState } from 'react';
+import axios from 'axios';
+
+const PremiumPage = () => {
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleBuyPremium = async () => {
+    setIsLoading(true);
+    setError('');
+
+    try {
+      const { data } = await axios.post('http://localhost:5000/api/payment/create-charge', {
+        amount: 60,  // Amount in USD (or equivalent in BTC)
+        currency: 'USD',
+        userId: 'userId123',  // Replace with actual user ID
+      });
+
+      window.location.href = data.chargeUrl;  // Redirect to Coinbase hosted payment page
+    } catch (err) {
+      setError('Failed to create payment. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div>
+      <h2>Premium Features</h2>
+      <button onClick={handleBuyPremium} disabled={isLoading}>
+        {isLoading ? 'Processing...' : 'Buy Premium'}
+      </button>
+      {error && <p>{error}</p>}
+    </div>
+  );
+};
+
+export default PremiumPage;
+// server/routes/webhookRoutes.js
+const express = require('express');
+const { confirmPayment } = require('../controllers/paymentController');
+const router = express.Router();
+
+router.post('/webhook', (req, res) => {
+  const chargeId = req.body.data.id;
+  const userId = req.body.data.metadata.userId;
+
+  confirmPayment({ chargeId, userId });
+
+  res.status(200).send('Payment confirmed');
+});
+
+module.exports = router;
+// server/models/User.js
+
+const mongoose = require('mongoose');
+
+const userSchema = new mongoose.Schema({
+  username: { type: String, required: true },
+  email: { type: String, required: true },
+  password: { type: String, required: true },
+  premium: { type: Boolean, default: false },  // Add premium flag
+  // other fields...
+});
+
+const User = mongoose.model('User', userSchema);
+
+module.exports = User;

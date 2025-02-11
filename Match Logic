@@ -1,0 +1,15 @@
+const Match = require('../models/Match');
+const User = require('../models/User');
+
+const createMatch = async (user1Id, user2Id) => {
+  const match = new Match({
+    user1: user1Id,
+    user2: user2Id,
+  });
+
+  await match.save();
+
+  // Optionally, notify both users of the match (e.g., via email or push notifications)
+};
+
+module.exports = { createMatch };
