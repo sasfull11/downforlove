@@ -1,0 +1,32 @@
+addEventListener('fetch', event => {
+    event.respondWith(handleRequest(event.request))
+  })
+  
+  /**
+   * Respond with a Hello World message.
+   * @param {Request} request
+   */
+  async function handleRequest(request) {
+    // Example: Return a simple JSON response
+    return new Response(
+      JSON.stringify({ message: 'Hello from Cloudflare Worker!' }),
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+  }
+  addEventListener('fetch', event => {
+    event.respondWith(handleRequest(event.request))
+  })
+  
+  async function handleRequest(request) {
+    // Example: Check for the route and perform an action (e.g., login)
+    if (request.method === 'POST' && new URL(request.url).pathname === '/api/login') {
+      const { email, password } = await request.json();
+      // Perform login logic here (using a database or external API)
+      return new Response(JSON.stringify({ message: 'Login successful' }), { status: 200 });
+    }
+  
+    return new Response('Not Found', { status: 404 });
+  }
+  
